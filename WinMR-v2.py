@@ -88,7 +88,7 @@ def get_folder_path(msg: str) -> str:
     path_folder_raw = path_folder_raw.strip('"')
 
     if path_folder_raw == "":
-        return ""
+        return None
 
     if not isdir(path_folder_raw):
         raise NotADirectoryError(path_folder_raw)
@@ -246,7 +246,7 @@ if __name__ == "__main__":
     path_src: str = get_folder_path("images")
     path_target: str = get_folder_path("target")
 
-    if path_target == "":
+    if path_target == None:
         path_target = path_src
 
     if path_src == path_target:
