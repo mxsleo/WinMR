@@ -10,7 +10,7 @@ Win Media Renamer v2 - Renames images by datetime
 - Informative output with warning limits support
 
 ## Usage
-1. Install Python3 with the Pillow plugin
+1. Install Python3 with the Pillow and pywin32 plugins
 2. Download WinMR-v2
 3. Run WinMR-v2
 4. Specify the source directory

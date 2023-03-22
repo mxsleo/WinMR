@@ -7,9 +7,10 @@ Win Media Renamer v2
 
 Renames images by datetime
 
+TODO: Multiplatform support
 TODO: Log to a file option
 TODO: An option to remove empty directories
-TODO: Video renamer
+TODO: Unify get_datetime functions
 TODO: An option to rename images by size with naming options supported
 
 """
@@ -25,6 +26,10 @@ from os import listdir, rename, mkdir
 from os.path import abspath, exists, isdir, isfile, join, getmtime
 
 from PIL.Image import open as image_open
+
+# from _win32typing import PyIPropertyStore
+
+from win32com.propsys import propsys, pscon
 
 from time import struct_time, localtime, strptime, strftime, gmtime, mktime
 
@@ -60,6 +65,11 @@ supported_extensions: dict = {
     "jpg": "jpg",
     "jpeg": "jpg",
     "png": "png"
+}
+
+supported_extensions_video: dict = {
+    "mp4": "mp4",
+    "mov": "mov"
 }
 
 # EXIF datetime tag:
@@ -175,6 +185,76 @@ def get_image_datetime(path_filename_extension: str) -> str:
     return image_datetime_exif_printable
 
 
+# Returns datetime in format YYYY-MM-DD hh-mm-ss
+def get_video_datetime(path_filename_extension: str) -> str:
+
+    # Get Win datetime with timezone offset
+    # Extract struct_time and printable string
+    # Check the limits
+    video_datetime_windows_float: float = getmtime(
+        path_filename_extension) + datetime_gmt * 60 * 60
+
+    video_datetime_windows: struct_time = gmtime(video_datetime_windows_float)
+    video_datetime_windows_printable: str = strftime(
+        format_name, video_datetime_windows)
+
+    if log_wdor and (video_datetime_windows < datetime_warning_low or
+                     video_datetime_windows > datetime_warning_high):
+        print("WDOR Warning: Win datetime out of range: \"{}\"".format(
+            video_datetime_windows_printable))
+
+    # Try to get datetime with propsys
+    video_datetime_ps_raw: str = None
+    path_filename_extension_win: str = path_filename_extension.replace(
+        '/', '\\')
+    properties: PyIPropertyStore = propsys.SHGetPropertyStoreFromParsingName(
+        path_filename_extension_win)
+    if properties is not None:
+        video_datetime_ps_raw = properties.GetValue(
+            pscon.PKEY_Media_DateEncoded).GetValue()
+
+    if video_datetime_ps_raw is None:
+        if log_e404:
+            print("E404 Warning: propsys datetime is empty")
+        return video_datetime_windows_printable
+
+    # Get EXIF datetime with timezone offset
+    # Extract struct_time and printable string
+    # Check the limits
+    video_datetime_ps_raw = str(video_datetime_ps_raw).split('+')[0]
+    video_datetime_ps_float: float = mktime(strptime(
+        video_datetime_ps_raw, "%Y-%m-%d %H:%M:%S")) + datetime_gmt * 60 * 60
+
+    video_datetime_ps: struct_time = gmtime(video_datetime_ps_float)
+    video_datetime_ps_printable: str = strftime(
+        format_name, video_datetime_ps)
+
+    if (video_datetime_ps < datetime_warning_low or
+            video_datetime_ps > datetime_warning_high):
+        if log_edor:
+            print("EDOR Warning: EXIF datetime out of range: \"{}\"".format(
+                video_datetime_ps_printable))
+        return video_datetime_windows_printable
+
+    # Check if Win and EXIF datetimes are different
+    if abs(video_datetime_windows_float - video_datetime_ps_float) > eps:
+
+        if log_diff:
+            print("DIFF Warning: EXIF datetime \"{}\""
+                  " differs too much from Win datetime \"{}\"".format(
+                      video_datetime_ps_printable,
+                      video_datetime_windows_printable))
+
+        if use_dual:
+            return "{} ({})".format(
+                video_datetime_windows_printable,
+                video_datetime_ps_printable)
+
+        return video_datetime_ps_printable
+
+    return video_datetime_ps_printable
+
+
 # Returns a postfix in the specified format if the same file exists
 def get_postfix(path_target: str, filename: str, extension: str) -> str:
 
@@ -225,6 +305,23 @@ def rename_images_by_datetime(path_src: str, path_target: str) -> int:
 
                 new_filename_extension: str = "{}{}.{}".format(
                     image_datetime, postfix, new_extension)
+                new_path_filename_extension: str = join(
+                    path_target, new_filename_extension)
+
+                print("\t\"{}\"->\"{}\"".format(filename_extension,
+                      new_filename_extension))
+                rename(path_filename_extension, new_path_filename_extension)
+
+            elif extension in supported_extensions_video:
+
+                new_extension: str = supported_extensions_video[extension]
+                video_datetime: str = get_video_datetime(
+                    path_filename_extension)
+                postfix: str = get_postfix(
+                    path_target, video_datetime, new_extension)
+
+                new_filename_extension: str = "{}{}.{}".format(
+                    video_datetime, postfix, new_extension)
                 new_path_filename_extension: str = join(
                     path_target, new_filename_extension)
 
