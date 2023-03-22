@@ -158,15 +158,18 @@ def get_image_datetime(path_filename_extension: str) -> str:
 
     # Check if Win and EXIF datetimes are different
     if abs(image_datetime_windows_float - image_datetime_exif_float) > eps:
+
         if log_diff:
             print("DIFF Warning: EXIF datetime \"{}\""
                   " differs too much from Win datetime \"{}\"".format(
                       image_datetime_exif_printable,
                       image_datetime_windows_printable))
+
         if use_dual:
             return "{} ({})".format(
                 image_datetime_windows_printable,
                 image_datetime_exif_printable)
+
         return image_datetime_exif_printable
 
     return image_datetime_exif_printable
