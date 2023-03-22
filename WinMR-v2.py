@@ -246,7 +246,7 @@ if __name__ == "__main__":
     path_src: str = get_folder_path("images")
     path_target: str = get_folder_path("target")
 
-    if path_target == None:
+    if path_target is None:
         path_target = path_src
 
     if path_src == path_target:
