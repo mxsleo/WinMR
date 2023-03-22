@@ -7,8 +7,9 @@ Win Media Renamer v2
 
 Renames images by datetime
 
-TODO: Video renamer
+TODO: Logging options
 TODO: An option to remove empty directories
+TODO: Video renamer
 TODO: An option to rename images by size with naming options supported
 
 """
@@ -156,7 +157,7 @@ def get_image_datetime(path_filename_extension: str) -> str:
     return image_datetime_exif_printable
 
 
-# Returns a postfix in format _num if the same file exists
+# Returns a postfix in the specified format if the same file exists
 def get_postfix(path_target: str, filename: str, extension: str) -> str:
 
     postfix: int = 0
@@ -229,7 +230,7 @@ def rename_images_by_datetime(path_src: str, path_target: str) -> int:
                 path_filename_extension, new_path_filename_extension)
 
         else:
-            print("Not a file: \"{}\"".format(filename_extension))
+            print("Not a file or directory: \"{}\"".format(filename_extension))
 
     return 0
 
