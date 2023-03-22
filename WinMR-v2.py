@@ -7,7 +7,7 @@ Win Media Renamer v2
 
 Renames images by datetime
 
-TODO: Logging options
+TODO: Log to a file option
 TODO: An option to remove empty directories
 TODO: Video renamer
 TODO: An option to rename images by size with naming options supported
@@ -66,6 +66,18 @@ supported_extensions: dict = {
 # https://www.awaresystems.be/imaging/tiff/tifftags/privateifd/exif/datetimeoriginal.html
 exif_tag_datetime: int = 0x9003
 
+# Logging options
+# Win datetime out of range
+log_wdor: bool = True
+# EXIF datetime out of range
+log_edor: bool = True
+# EXIF datetime is empty
+log_e404: bool = True
+# EXIF datetime differs too much from Win datetime
+log_diff: bool = True
+# Postfix added
+log_pfix: bool = True
+
 # Warning datetime limits
 datetime_warning_low: struct_time = strptime(
     "2014-01-01 00-00-00", "%Y-%m-%d %H-%M-%S")
@@ -109,8 +121,8 @@ def get_image_datetime(path_filename_extension: str) -> str:
     image_datetime_windows_printable: str = strftime(
         format_name, image_datetime_windows)
 
-    if (image_datetime_windows < datetime_warning_low or
-            image_datetime_windows > datetime_warning_high):
+    if log_wdor and (image_datetime_windows < datetime_warning_low or
+                     image_datetime_windows > datetime_warning_high):
         print("WDOR Warning: Win datetime out of range: \"{}\"".format(
             image_datetime_windows_printable))
 
@@ -123,7 +135,8 @@ def get_image_datetime(path_filename_extension: str) -> str:
 
     # Return Win datetime if EXIF is empty
     if image_datetime_exif_raw is None:
-        print("E404 Warning: EXIF datetime is empty")
+        if log_e404:
+            print("E404 Warning: EXIF datetime is empty")
         return image_datetime_windows_printable
 
     # Get EXIF datetime with timezone offset
@@ -138,16 +151,18 @@ def get_image_datetime(path_filename_extension: str) -> str:
 
     if (image_datetime_exif < datetime_warning_low or
             image_datetime_exif > datetime_warning_high):
-        print("EDOR Warning: EXIF datetime out of range: \"{}\"".format(
-            image_datetime_exif_printable))
+        if log_edor:
+            print("EDOR Warning: EXIF datetime out of range: \"{}\"".format(
+                image_datetime_exif_printable))
         return image_datetime_windows_printable
 
     # Check if Win and EXIF datetimes are different
     if abs(image_datetime_windows_float - image_datetime_exif_float) > eps:
-        print("DIFF Warning: EXIF datetime \"{}\""
-              " differs too much from Win datetime \"{}\"".format(
-                  image_datetime_exif_printable,
-                  image_datetime_windows_printable))
+        if log_diff:
+            print("DIFF Warning: EXIF datetime \"{}\""
+                  " differs too much from Win datetime \"{}\"".format(
+                      image_datetime_exif_printable,
+                      image_datetime_windows_printable))
         if use_dual:
             return "{} ({})".format(
                 image_datetime_windows_printable,
@@ -177,7 +192,7 @@ def get_postfix(path_target: str, filename: str, extension: str) -> str:
         new_path_filename_extension = join(
             path_target, new_filename_extension)
 
-    if postfix > 0:
+    if log_pfix and postfix > 0:
         print("PFIX Warning: Postfix added: \"{}\"".format(postfix_str))
 
     return postfix_str
