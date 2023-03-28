@@ -17,11 +17,14 @@ from os import name as osname, listdir, mkdir, rmdir, rename
 from os.path import isdir, abspath, join, isfile, exists, getmtime
 from time import struct_time, localtime, strftime, strptime, mktime
 from PIL.Image import Image, Exif, open as image_open
+from pillow_heif import register_heif_opener
 try:
     from _win32typing import PyIPropertyStore  # type: ignore
 except ModuleNotFoundError:
     print("Ignored: ModuleNotFoundError: No module named '_win32typing'")
 from win32com.propsys import propsys, pscon  # type: ignore
+
+register_heif_opener()
 
 # Constants
 
@@ -40,7 +43,8 @@ exif_tag_dt: int = 0x9003
 ext_img: dict = {
     "jpg": "jpg",
     "jpeg": "jpg",
-    "png": "png"
+    "png": "png",
+    "heic": "heic"
 }
 ext_vid: dict = {
     "mp4": "mp4",

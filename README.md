@@ -13,7 +13,7 @@ Win Media Renamer - Renames images by datetime
 - Can be used as a library providing get_dt, pfix, path functions
 
 ## Usage
-1. Install Python3 with the Pillow and pywin32 plugins
+1. Install Python3 with the Pillow (including HEIF) and pywin32 plugins
 2. Download WinMR
 3. Run WinMR
 4. Specify the source directory
